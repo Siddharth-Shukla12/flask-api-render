@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
-
+lat,long=0,0
 
 crime_df = pd.read_csv("csv_2017_2022.csv", low_memory=False)
 
@@ -31,13 +31,14 @@ def calculate_safety_score(street, district):
     """
     # Filter crimes based on user input
     filtered_crimes = crime_df[(crime_df["DISTRICT"] == district) & (crime_df["STREET"].str.contains(street, case=False, na=False))]
-
+    lat,long=filtered_crimes["Lat"][0],filtered_crimes["Long"][0]
+   
     # Calculate crime score using severity weights
     crime_score = sum(crime for crime in filtered_crimes["NEW_OFFENSE"])
-    print(crime_score)
+
     normalized_crime_score = normalize_crime_score(crime_score)
     safety_score = 100 - normalized_crime_score
-    print(safety_score)
+
     if 90 <= safety_score <= 100:
         safety_level = "🟢 Dark Green (Very Safe)"
     elif 80 <= safety_score < 90:
@@ -59,10 +60,9 @@ def calculate_safety_score(street, district):
     else:
         safety_level = "🔴 Dark Red (Super Unsafe)"
 
-    return safety_score, safety_level
+    return safety_score, safety_level,lat,long
 @app.route("/")
 def home():
-    print("🚀 Home Route Hit!")
     return "Flask API is running!"
 @app.route("/safety-index", methods=["GET"])
 def get_safety_index():
@@ -72,13 +72,15 @@ def get_safety_index():
     if not street or not district:
         return jsonify({"error": "Please provide both street and district"}), 400
 
-    safety_score, safety_level = calculate_safety_score(street, district)
+    safety_score, safety_level,lat,long = calculate_safety_score(street, district)
 
     return jsonify({
         "street": street,
         "district": district,
         "safety_score": safety_score,
-        "safety_level": safety_level
+        "safety_level": safety_level,
+        "latitude": lat,
+        "longitude": long
     })
 
 if __name__ == "__main__":
