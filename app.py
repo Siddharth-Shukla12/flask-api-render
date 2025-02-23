@@ -31,13 +31,19 @@ def calculate_safety_score(street, district):
     """
     # Filter crimes based on user input
     filtered_crimes = crime_df[(crime_df["DISTRICT"] == district) & (crime_df["STREET"].str.contains(street, case=False, na=False))]
-    lat,long=filtered_crimes["Lat"][0],filtered_crimes["Long"][0]
+    # if filtered_crimes.empty:
+    #     return 100, "🟢 Dark Green (Very Safe)", None, None  # Default safe score if no crimes found
+    print(filtered_crimes)
+    lat, long = filtered_crimes.iloc[0]["Lat"], filtered_crimes.iloc[0]["Long"]
    
     # Calculate crime score using severity weights
     crime_score = sum(crime for crime in filtered_crimes["NEW_OFFENSE"])
 
     normalized_crime_score = normalize_crime_score(crime_score)
     safety_score = 100 - normalized_crime_score
+    unique_Street=crime_df["STREET"].unique()
+    unique_District=crime_df["DISTRICT"].unique()  
+
 
     if 90 <= safety_score <= 100:
         safety_level = "🟢 Dark Green (Very Safe)"
